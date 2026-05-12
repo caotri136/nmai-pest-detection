@@ -1,67 +1,65 @@
-# Rice Pest Detection System (Web Demo)
+# nmai-pest-detection
 
-## Overview
-- Frontend demo for rice pest detection using image upload.
-- Labels: pest-big (Sau lon), round-pest (Sau tron), thin_pest (Sau dai).
-- Sends the image to backend endpoint POST /predict and shows label + confidence.
+Rice pest detection demo with:
+- A **Next.js** UI for uploading an image and viewing predictions
+- A **FastAPI** backend that loads a **ResNet50** model and returns predicted class + confidence
 
-## Setup (One Command)
-- Install frontend deps: `npm install`
-- Install backend deps: `python -m pip install -r backend/requirements.txt`
-- Start both services: `npm run dev:all`
+## Project structure
+- `app/`: Next.js App Router UI
+- `backend/`: FastAPI service (`backend/main.py`)
+- `share.bat` / `scripts/share.ps1`: helper for exposing local ports via `localhost.run` (writes logs to `.tunnels/`)
+- `requirements.txt`: Python dependencies for the backend
 
-If PowerShell blocks npm scripts, use:
-- `d:\nodejs\npm.cmd install`
-- `d:\nodejs\npm.cmd run dev:all`
+## Labels (classes)
+- `pest-big`
+- `round-pest`
+- `thin_pest`
 
-If Python is not on PATH, install Python 3.10+ and reopen your terminal.
+## Quick start (local)
+Frontend (Next.js):
 
-## Scripts
-- Frontend only: `npm run dev`
-- Backend only: `npm run dev:backend`
-- Both: `npm run dev:all`
-
-## Environment
-- Create `.env.local` at the project root and set:
-  - `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`
-
-## Backend
-- Location: `backend/`
-- Default port: `8000`
-
-## API Contract
-- Endpoint: `POST /predict`
-- Form field: `file`
-- Response example:
-  - `{ "label": "round-pest", "confidence": 0.98 }`
-
-## CORS (Backend)
-The backend allows `http://localhost:3000` by default.
-Override via env var `FRONTEND_ORIGIN` when needed.
-
-FastAPI:
-```python
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+```bash
+npm install
+npm run dev
 ```
 
-Flask:
-```python
-from flask_cors import CORS
+Backend (FastAPI):
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+```bash
+python -m pip install -r requirements.txt
+cd backend
+python main.py
 ```
 
-Express:
-```js
-import cors from "cors";
+Or run both (two processes):
 
-app.use(cors({ origin: "http://localhost:3000" }));
+```bash
+npm run dev:all
 ```
+
+## Configuration
+Frontend calls the backend using `NEXT_PUBLIC_API_BASE_URL`:
+
+- Create `.env.local` in the repo root:
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+```
+
+Backend CORS:
+- `FRONTEND_ORIGIN`: comma-separated origins (default: `http://localhost:3000`)
+- `FRONTEND_ORIGIN_REGEX`: regex allowlist (default allows `https://*.lhr.life`)
+
+## API
+- `POST /predict`
+  - form field: `file` (JPG/PNG)
+  - returns `status` + `data` including `id`, `name_vi`, `confidence`, and details from `backend/pest_data.py`
+
+## Model file
+Backend expects the model weights at:
+- `backend/pest_resnet50.pth`
+
+If the file is missing, the backend still starts but will print a warning and cannot predict correctly.
+
+## Sharing (optional)
+Run `share.bat` to start backend + frontend and create `localhost.run` tunnels. Logs and links are written under `.tunnels/`.
